@@ -21,7 +21,7 @@ export const Input = ({
   return (
     <div className="relative w-full">
       <ShadcnInput
-        className="bg-secondary py-6 w-full rounded-xl pr-12"
+        className="bg-[#1E293B] border-white/10 text-[#f8fafc] placeholder:text-[#475569] py-6 w-full rounded-xl pr-12 focus-visible:ring-[#22c55e]/40 focus-visible:border-[#22c55e]/60"
         value={input}
         autoFocus
         placeholder={"Tell me what to do..."}
