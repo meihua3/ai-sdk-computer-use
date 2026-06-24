@@ -34,6 +34,7 @@ export const VncPanel = memo(function VncPanel({ onRefresh }: VncPanelProps) {
             key={sessionId}
             className="absolute inset-0"
             style={{ display: isActive ? "block" : "none" }}
+            aria-hidden={!isActive}
           >
             {url ? (
               <iframe
