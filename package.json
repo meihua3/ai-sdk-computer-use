@@ -11,10 +11,10 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^1.1.15",
     "@ai-sdk/react": "^1.1.21",
-    "@vercel/sandbox": "latest",
     "@radix-ui/react-label": "^2.1.2",
     "@radix-ui/react-slot": "^1.1.2",
     "@vercel/analytics": "^1.5.0",
+    "@vercel/sandbox": "latest",
     "ai": "^4.1.54",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -30,7 +30,8 @@
     "streamdown": "^1.6.7",
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7",
-    "zod": "^3.24.2"
+    "zod": "^3.24.2",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
