@@ -33,7 +33,7 @@ export function useSessionSandbox() {
         if (cancelled) return;
         useSandboxUrlStore.getState().clearUrl(activeSessionId);
         toast.error("Failed to connect desktop", {
-          description: "Click the session again to retry.",
+          description: "Switch to another session and back to retry.",
         });
       });
 
@@ -63,6 +63,11 @@ export function useSessionSandbox() {
   // Force-create a brand new sandbox for the active session (New Desktop button)
   const initSandbox = useCallback(async () => {
     if (!activeSessionId) return;
+    // Kill existing sandbox before creating a new one
+    const existingSandboxId = useSessionStore.getState().activeSandboxId();
+    if (existingSandboxId) {
+      killDesktop(existingSandboxId).catch(() => {});
+    }
     useSandboxUrlStore.getState().setInitializing(activeSessionId);
     try {
       const { streamUrl, id } = await getDesktopURL(undefined);
@@ -76,17 +81,5 @@ export function useSessionSandbox() {
     }
   }, [activeSessionId]);
 
-  // Kill a specific session's sandbox (used on session delete)
-  const killSandboxForSession = useCallback(
-    async (sessionId: string, sandboxId: string) => {
-      try {
-        await killDesktop(sandboxId);
-      } catch {}
-      useSandboxUrlStore.getState().clearUrl(sessionId);
-      useSessionStore.getState().setSandboxId(sessionId, null);
-    },
-    []
-  );
-
-  return { initSandbox, killSandboxForSession };
+  return { initSandbox };
 }
