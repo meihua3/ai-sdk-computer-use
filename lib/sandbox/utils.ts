@@ -9,7 +9,7 @@ const DISPLAY_ENV = { DISPLAY: ":99" };
 export const getDesktop = async (id?: string) => {
   try {
     if (id) {
-      const sandbox = await Sandbox.get({ sandboxId: id });
+      const sandbox = await Sandbox.get({ name: id });
       if (sandbox.status === "running") {
         return sandbox;
       }
@@ -101,7 +101,7 @@ export const getDesktopURL = async (id?: string) => {
     const baseUrl = sandbox.domain(NOVNC_PORT);
     const streamUrl = `${baseUrl}/vnc.html?autoconnect=true&resize=scale&reconnect=true`;
 
-    return { streamUrl, id: sandbox.sandboxId };
+    return { streamUrl, id: sandbox.name };
   } catch (error) {
     console.error("Error in getDesktopURL:", error);
     throw error;
@@ -110,7 +110,7 @@ export const getDesktopURL = async (id?: string) => {
 
 export const killDesktop = async (id: string) => {
   try {
-    const sandbox = await Sandbox.get({ sandboxId: id });
+    const sandbox = await Sandbox.get({ name: id });
     await sandbox.stop();
   } catch (error) {
     console.error("Error killing desktop:", error);

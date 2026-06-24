@@ -71,7 +71,7 @@ async function createSnapshot() {
   const sandbox = await Sandbox.create({
     timeout: 600000, // 10 minutes for setup
   });
-  console.log(`Sandbox created: ${sandbox.sandboxId}`);
+  console.log(`Sandbox created: ${sandbox.name}`);
 
   // Step 1: Install packages available in AL2023 core repos
   await run(

@@ -105,7 +105,7 @@ export function ChatPanel({ sandboxId }: ChatPanelProps) {
               Ask the agent to do something on the desktop
             </p>
             <p className="text-[#475569] text-xs">
-              e.g. "What&apos;s the weather in Dubai?"
+              e.g. &ldquo;What&apos;s the weather in Dubai?&rdquo;
             </p>
           </div>
         )}

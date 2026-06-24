@@ -16,7 +16,6 @@ type SessionItemProps = {
 };
 
 function SessionItem({
-  id,
   title,
   isActive,
   onSelect,
