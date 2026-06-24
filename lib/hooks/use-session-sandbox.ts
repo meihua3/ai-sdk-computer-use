@@ -70,7 +70,9 @@ export function useSessionSandbox() {
       useSessionStore.getState().setSandboxId(activeSessionId, id);
     } catch {
       useSandboxUrlStore.getState().clearUrl(activeSessionId);
-      toast.error("Failed to create desktop");
+      toast.error("Failed to create desktop", {
+        description: "Please try again.",
+      });
     }
   }, [activeSessionId]);
 
