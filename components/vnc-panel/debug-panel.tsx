@@ -13,6 +13,8 @@ import {
   Clock,
   Loader2,
   CircleSlash,
+  MousePointer,
+  Keyboard,
 } from "lucide-react";
 import type { AgentEvent, AgentStatus } from "@/lib/types";
 
@@ -120,7 +122,7 @@ function formatDuration(ms: number): string {
   return `${(ms / 1000).toFixed(1)}s`;
 }
 
-function toolStats(events: AgentEvent[]) {
+function computeStats(events: AgentEvent[]) {
   const completed = events.filter((e) => e.duration != null);
   const total = completed.reduce((s, e) => s + (e.duration ?? 0), 0);
   return {
@@ -131,10 +133,18 @@ function toolStats(events: AgentEvent[]) {
   };
 }
 
-const TOOL_ICONS: Record<string, React.ReactNode> = {
-  computer: <Camera className="w-3 h-3 text-[#94a3b8]" />,
-  bash: <Terminal className="w-3 h-3 text-[#94a3b8]" />,
-};
+function getActionKey(event: AgentEvent): string {
+  return event.tool === "computer" ? event.payload.action : "bash";
+}
+
+function ActionIcon({ event }: { event: AgentEvent }) {
+  if (event.tool === "bash") return <Terminal className="w-3 h-3 text-[#94a3b8]" />;
+  const action = event.payload.action;
+  if (action === "screenshot") return <Camera className="w-3 h-3 text-[#94a3b8]" />;
+  if (action === "wait") return <Clock className="w-3 h-3 text-[#94a3b8]" />;
+  if (action === "key" || action === "type") return <Keyboard className="w-3 h-3 text-[#94a3b8]" />;
+  return <MousePointer className="w-3 h-3 text-[#94a3b8]" />;
+}
 
 export function DebugPanel({ isCollapsed, onToggle }: DebugPanelProps) {
   const [activeTab, setActiveTab] = useState<"events" | "stats">("events");
@@ -150,6 +160,11 @@ export function DebugPanel({ isCollapsed, onToggle }: DebugPanelProps) {
         : "ready"
   );
 
+  // Deduplicate by id — guards against legacy store data with duplicate entries
+  const uniqueEvents = Array.from(
+    new Map(events.map((e) => [e.id, e])).values()
+  );
+
   const agentStatus: AgentStatus =
     chatStatus === "streaming" || chatStatus === "submitted"
       ? { type: "running", startedAt: 0 }
@@ -157,8 +172,8 @@ export function DebugPanel({ isCollapsed, onToggle }: DebugPanelProps) {
         ? { type: "error", message: "Chat error occurred" }
         : { type: "idle" };
 
-  const completedEvents = events.filter((e) => e.duration != null);
-  const totalCalls = events.length;
+  const completedEvents = uniqueEvents.filter((e) => e.duration != null);
+  const totalCalls = uniqueEvents.length;
   const totalDuration = completedEvents.reduce(
     (sum, e) => sum + (e.duration ?? 0),
     0
@@ -168,15 +183,17 @@ export function DebugPanel({ isCollapsed, onToggle }: DebugPanelProps) {
       ? Math.round(totalDuration / completedEvents.length)
       : null;
 
-  // Group events by tool for stats tab
-  const byTool = events.reduce<Record<string, AgentEvent[]>>((acc, e) => {
-    if (!acc[e.tool]) acc[e.tool] = [];
-    acc[e.tool].push(e);
+  // Group by specific action (screenshot, wait, left_click, bash, etc.)
+  const byAction = uniqueEvents.reduce<Record<string, AgentEvent[]>>((acc, e) => {
+    const key = getActionKey(e);
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(e);
     return acc;
   }, {});
-  const toolBreakdown = Object.entries(byTool).map(([tool, toolEvents]) => ({
-    tool,
-    ...toolStats(toolEvents),
+  const actionBreakdown = Object.entries(byAction).map(([action, actionEvents]) => ({
+    action,
+    sampleEvent: actionEvents[0]!,
+    ...computeStats(actionEvents),
   }));
 
   return (
@@ -240,12 +257,12 @@ export function DebugPanel({ isCollapsed, onToggle }: DebugPanelProps) {
           {/* Events tab */}
           {activeTab === "events" && (
             <div className="overflow-y-auto max-h-40 py-1">
-              {events.length === 0 ? (
+              {uniqueEvents.length === 0 ? (
                 <div className="px-3 py-4 text-center text-xs text-[#475569]">
                   No tool calls yet
                 </div>
               ) : (
-                [...events].reverse().map((event) => (
+                [...uniqueEvents].reverse().map((event) => (
                   <EventRow key={event.id} event={event} />
                 ))
               )}
@@ -255,7 +272,7 @@ export function DebugPanel({ isCollapsed, onToggle }: DebugPanelProps) {
           {/* Stats tab */}
           {activeTab === "stats" && (
             <div className="overflow-y-auto max-h-40 py-2 px-3">
-              {events.length === 0 ? (
+              {uniqueEvents.length === 0 ? (
                 <div className="py-4 text-center text-xs text-[#475569]">
                   No tool calls yet
                 </div>
@@ -263,33 +280,30 @@ export function DebugPanel({ isCollapsed, onToggle }: DebugPanelProps) {
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="text-[#475569] text-[10px] uppercase tracking-wide">
-                      <th className="text-left pb-2 font-normal">Tool</th>
+                      <th className="text-left pb-2 font-normal">Action</th>
                       <th className="text-right pb-2 font-normal">Calls</th>
                       <th className="text-right pb-2 font-normal">Total</th>
                       <th className="text-right pb-2 font-normal">Avg</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {/* Overall row */}
                     <tr className="text-[#94a3b8] border-b border-white/[0.04]">
                       <td className="py-1.5 font-medium">All</td>
                       <td className="text-right tabular-nums">{totalCalls}</td>
                       <td className="text-right tabular-nums font-mono">
-                        {totalDuration > 0
-                          ? formatDuration(totalDuration)
-                          : "—"}
+                        {totalDuration > 0 ? formatDuration(totalDuration) : "—"}
                       </td>
                       <td className="text-right tabular-nums font-mono">
-                        {avgDuration != null
-                          ? formatDuration(avgDuration)
-                          : "—"}
+                        {avgDuration != null ? formatDuration(avgDuration) : "—"}
                       </td>
                     </tr>
-                    {toolBreakdown.map(({ tool, count, totalMs, avgMs }) => (
-                      <tr key={tool} className="text-[#64748b]">
-                        <td className="py-1.5 flex items-center gap-1.5">
-                          {TOOL_ICONS[tool] ?? null}
-                          {tool}
+                    {actionBreakdown.map(({ action, sampleEvent, count, totalMs, avgMs }) => (
+                      <tr key={action} className="text-[#64748b]">
+                        <td className="py-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <ActionIcon event={sampleEvent} />
+                            {action}
+                          </div>
                         </td>
                         <td className="text-right tabular-nums">{count}</td>
                         <td className="text-right tabular-nums font-mono">
