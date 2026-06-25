@@ -45,3 +45,6 @@ next-env.d.ts
 
 # Chinese locale docs (not for repo)
 **/zh/
+
+# Internal docs folder
+/md/
