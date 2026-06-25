@@ -172,6 +172,7 @@ export default function Page() {
         {/* Top nav bar */}
         <div className="flex items-center gap-3 px-3 py-2 bg-[#0a0e1a] border-b border-white/[0.06] shrink-0">
           <button
+            type="button"
             onClick={() => setDrawerOpen(true)}
             className="p-1 rounded text-[#94a3b8] hover:text-[#f8fafc] hover:bg-white/5"
             aria-label="打开会话列表"
@@ -217,7 +218,10 @@ export default function Page() {
             handleSwitchSession(id);
             setDrawerOpen(false);
           }}
-          onDeleteSession={handleDeleteSession}
+          onDeleteSession={(id) => {
+            handleDeleteSession(id);
+            setDrawerOpen(false);
+          }}
         />
       </div>
     </div>
