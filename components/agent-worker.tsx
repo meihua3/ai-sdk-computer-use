@@ -30,6 +30,7 @@ export function AgentWorker({ sessionId }: { sessionId: string }) {
   } = useChat({
     api: "/api/chat",
     id: sessionId,
+    // body is read via ref on each request by useChat — sandboxId changes are picked up
     body: { sandboxId: session?.sandboxId ?? null },
     maxSteps: 30,
     initialMessages: session?.messages ?? [],
@@ -51,6 +52,9 @@ export function AgentWorker({ sessionId }: { sessionId: string }) {
       }
     },
   });
+
+  const VALID_STATUSES = new Set<string>(["ready", "submitted", "streaming", "error"]);
+  const chatStatus: SessionChatStatus = VALID_STATUSES.has(status) ? (status as SessionChatStatus) : "ready";
 
   // Sync messages to session store for persistence + auto-title
   useEffect(() => {
@@ -120,7 +124,7 @@ export function AgentWorker({ sessionId }: { sessionId: string }) {
       }
     };
 
-    setInStore(sessionId, { messages, status: status as SessionChatStatus, submit, stop });
+    setInStore(sessionId, { messages, status: chatStatus, submit, stop });
   }, [messages, status, sessionId, setInStore]);
 
   // Cleanup when session is deleted (AgentWorker unmounts)
