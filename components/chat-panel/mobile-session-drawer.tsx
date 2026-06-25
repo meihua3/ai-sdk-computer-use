@@ -28,19 +28,29 @@ export function MobileSessionDrawer({
   const chatSessions = useMultiChatStore((s) => s.sessions);
   const unread = useNotificationStore((s) => s.unread);
 
-  if (!isOpen) return null;
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      onClose();
+    }
+  };
 
   return (
     <>
       {/* Backdrop — click to close */}
-      <div
-        className="fixed inset-0 bg-black/50 z-40"
-        onClick={onClose}
-        aria-hidden
-      />
+      {isOpen && <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} aria-hidden />}
 
       {/* Drawer panel */}
-      <div className="fixed top-0 left-0 bottom-0 w-3/4 max-w-xs z-50 bg-[#0a0e1a] border-r border-white/[0.06] flex flex-col">
+      <div
+        className={cn(
+          "fixed top-0 left-0 bottom-0 w-3/4 max-w-xs z-50 bg-[#0a0e1a] border-r border-white/[0.06] flex flex-col transition-transform duration-200 ease-out",
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+        role="dialog"
+        aria-modal="true"
+        aria-label="会话列表"
+        tabIndex={-1}
+        onKeyDown={handleKeyDown}
+      >
         {/* Header row */}
         <div className="flex items-center justify-between px-3 py-3 border-b border-white/[0.06]">
           <span className="text-sm font-medium text-[#94a3b8]">会话列表</span>
@@ -84,7 +94,7 @@ export function MobileSessionDrawer({
               <div
                 key={session.id}
                 className={cn(
-                  "group flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-colors text-sm",
+                  "flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-colors text-sm",
                   isActive
                     ? "bg-white/10 text-[#f8fafc]"
                     : "text-[#94a3b8] hover:bg-white/5 hover:text-[#f8fafc]"
@@ -111,7 +121,7 @@ export function MobileSessionDrawer({
                       e.stopPropagation();
                       onDeleteSession(session.id);
                     }}
-                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:text-[#ef4444] text-[#475569] transition-opacity"
+                    className="p-1 rounded hover:text-[#ef4444] text-[#475569] shrink-0 transition-colors"
                     aria-label="删除会话"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
