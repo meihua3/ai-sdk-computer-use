@@ -12,6 +12,8 @@ import { useSettingsStore } from "@/lib/store/settings-store";
 import { useEventSync } from "@/lib/hooks/use-event-sync";
 import { ABORTED } from "@/lib/utils";
 
+const VALID_STATUSES = new Set<string>(["ready", "submitted", "streaming", "error"]);
+
 export function AgentWorker({ sessionId }: { sessionId: string }) {
   const session = useSessionStore((s) =>
     s.sessions.find((sess) => sess.id === sessionId)
@@ -53,7 +55,6 @@ export function AgentWorker({ sessionId }: { sessionId: string }) {
     },
   });
 
-  const VALID_STATUSES = new Set<string>(["ready", "submitted", "streaming", "error"]);
   const chatStatus: SessionChatStatus = VALID_STATUSES.has(status) ? (status as SessionChatStatus) : "ready";
 
   // Sync messages to session store for persistence + auto-title
