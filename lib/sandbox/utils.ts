@@ -9,9 +9,13 @@ const DISPLAY_ENV = { DISPLAY: ":99" };
 export const getDesktop = async (id?: string) => {
   try {
     if (id) {
-      const sandbox = await Sandbox.get({ name: id });
-      if (sandbox.status === "running") {
-        return sandbox;
+      try {
+        const sandbox = await Sandbox.get({ name: id });
+        if (sandbox.status === "running") {
+          return sandbox;
+        }
+      } catch {
+        // Sandbox not found or auth unavailable — fall through to create a new one
       }
     }
 
@@ -99,7 +103,7 @@ export const getDesktopURL = async (id?: string) => {
   try {
     const sandbox = await getDesktop(id);
     const baseUrl = sandbox.domain(NOVNC_PORT);
-    const streamUrl = `${baseUrl}/vnc.html?autoconnect=true&resize=scale&reconnect=true`;
+    const streamUrl = `${baseUrl}/vnc.html?autoconnect=true&resize=scale&reconnect=true&reconnect_delay=2000&heartbeat=10`;
 
     return { streamUrl, id: sandbox.name };
   } catch (error) {
