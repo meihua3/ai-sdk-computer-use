@@ -19,15 +19,28 @@ import { SessionSidebar } from "@/components/chat-panel/session-sidebar";
 import { ChatPanel } from "@/components/chat-panel/chat-panel";
 import { VncPanel } from "@/components/vnc-panel/vnc-panel";
 import { DebugPanel } from "@/components/vnc-panel/debug-panel";
+import { Menu } from "lucide-react";
+import { MobileSessionDrawer } from "@/components/chat-panel/mobile-session-drawer";
 
 export default function Page() {
   const [debugCollapsed, setDebugCollapsed] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const sessions = useSessionStore((s) => s.sessions);
   const activeSessionId = useSessionStore((s) => s.activeSessionId);
   const createSession = useSessionStore((s) => s.createSession);
   const deleteSession = useSessionStore((s) => s.deleteSession);
   const setActiveSession = useSessionStore((s) => s.setActiveSession);
+
+  const activeSession = sessions.find((s) => s.id === activeSessionId);
+  const activeChatStatus = useMultiChatStore(
+    (s) =>
+      activeSessionId
+        ? s.sessions[activeSessionId]?.status ?? "ready"
+        : "ready"
+  );
+  const isActiveRunning =
+    activeChatStatus === "submitted" || activeChatStatus === "streaming";
 
   const { initSandbox } = useSessionSandbox();
 
@@ -154,17 +167,57 @@ export default function Page() {
         </ResizablePanelGroup>
       </div>
 
-      {/* Mobile: Chat + Debug bottom sheet */}
+      {/* Mobile: VNC top + Chat + Debug bottom sheet */}
       <div className="flex flex-col h-dvh xl:hidden">
+        {/* Top nav bar */}
+        <div className="flex items-center gap-3 px-3 py-2 bg-[#0a0e1a] border-b border-white/[0.06] shrink-0">
+          <button
+            onClick={() => setDrawerOpen(true)}
+            className="p-1 rounded text-[#94a3b8] hover:text-[#f8fafc] hover:bg-white/5"
+            aria-label="打开会话列表"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          <span className="flex-1 text-sm font-medium text-[#f8fafc] truncate">
+            {activeSession?.title ?? "No Session"}
+          </span>
+          {isActiveRunning && (
+            <span
+              className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0"
+              aria-label="运行中"
+            />
+          )}
+        </div>
+
+        {/* VNC panel — fixed 280px height */}
+        <div className="h-[280px] shrink-0">
+          <VncPanel onRefresh={initSandbox} />
+        </div>
+
+        {/* Chat — fills remaining space */}
         <div className="flex-1 min-h-0">
           <ChatPanel
             key={activeSessionId ?? "none"}
             sessionId={activeSessionId ?? ""}
           />
         </div>
+
+        {/* Debug bar at bottom */}
         <DebugPanel
           isCollapsed={debugCollapsed}
           onToggle={() => setDebugCollapsed((v) => !v)}
+        />
+
+        {/* Session drawer overlay */}
+        <MobileSessionDrawer
+          isOpen={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          onCreateSession={handleCreateSession}
+          onSwitchSession={(id) => {
+            handleSwitchSession(id);
+            setDrawerOpen(false);
+          }}
+          onDeleteSession={handleDeleteSession}
         />
       </div>
     </div>
