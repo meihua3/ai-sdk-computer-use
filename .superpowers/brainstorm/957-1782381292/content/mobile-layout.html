@@ -1,0 +1,134 @@
+<h2>移动端布局方案</h2>
+<p class="subtitle">VNC 显示位置 + 会话导航方式，选择最合适的方案</p>
+
+<div class="cards">
+
+  <!-- Option A -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0F172A;padding:12px;border-radius:8px;">
+      <div style="font-size:10px;color:#64748b;margin-bottom:6px;text-align:center">方案 A — 竖向堆叠</div>
+      <!-- Phone mockup -->
+      <div style="border:2px solid #334155;border-radius:12px;overflow:hidden;width:120px;margin:0 auto;font-size:9px;">
+        <!-- Top bar with hamburger -->
+        <div style="background:#1e293b;padding:4px 6px;display:flex;align-items:center;gap:4px;border-bottom:1px solid #334155;">
+          <span style="color:#94a3b8;">☰</span>
+          <span style="color:#94a3b8;flex:1;text-align:center;">Session 1</span>
+          <span style="color:#22c55e;font-size:7px;">● 运行中</span>
+        </div>
+        <!-- VNC at top -->
+        <div style="background:#0a0a0f;height:55px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #1e293b;">
+          <span style="color:#475569;font-size:8px;">🖥 VNC 画面</span>
+        </div>
+        <!-- Chat in middle -->
+        <div style="background:#0F172A;height:70px;padding:4px;border-bottom:1px solid #1e293b;">
+          <div style="background:#1e293b;border-radius:4px;padding:3px 4px;margin-bottom:3px;color:#94a3b8;font-size:7px;">Agent: 正在操作...</div>
+          <div style="background:#22c55e/20;border-radius:4px;padding:3px 4px;color:#f8fafc;font-size:7px;text-align:right">你: 截个屏</div>
+        </div>
+        <!-- Input -->
+        <div style="background:#1e293b;padding:4px 5px;border-bottom:1px solid #334155;">
+          <div style="background:#0F172A;border:1px solid #334155;border-radius:4px;padding:2px 4px;color:#475569;font-size:7px;">输入消息...</div>
+        </div>
+        <!-- Debug bar -->
+        <div style="background:#0a0e1a;padding:3px 6px;display:flex;justify-content:space-between;align-items:center;">
+          <span style="color:#475569;font-size:7px;">⊞ Debug</span>
+          <span style="color:#475569;font-size:7px;">▲</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — 竖向堆叠 + 汉堡菜单</h3>
+      <p>VNC 固定在顶部，Chat 居中，Debug 底部。左上角 ☰ 打开侧边抽屉切换会话。</p>
+      <div class="pros-cons" style="margin-top:8px;">
+        <div class="pros"><h4>优点</h4><ul><li>三个面板同时可见</li><li>App 感强</li></ul></div>
+        <div class="cons"><h4>缺点</h4><ul><li>每个区域都较小</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option B -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0F172A;padding:12px;border-radius:8px;">
+      <div style="font-size:10px;color:#64748b;margin-bottom:6px;text-align:center">方案 B — Tab 切换</div>
+      <div style="border:2px solid #334155;border-radius:12px;overflow:hidden;width:120px;margin:0 auto;font-size:9px;">
+        <!-- Top bar with back -->
+        <div style="background:#1e293b;padding:4px 6px;display:flex;align-items:center;gap:4px;border-bottom:1px solid #334155;">
+          <span style="color:#94a3b8;">☰</span>
+          <span style="color:#94a3b8;flex:1;text-align:center;">Session 1</span>
+        </div>
+        <!-- Tab bar -->
+        <div style="display:flex;border-bottom:1px solid #334155;">
+          <div style="flex:1;text-align:center;padding:4px 0;background:#0F172A;color:#22c55e;font-size:7px;border-bottom:1px solid #22c55e;">💬 对话</div>
+          <div style="flex:1;text-align:center;padding:4px 0;background:#0a0e1a;color:#475569;font-size:7px;">🖥 VNC</div>
+          <div style="flex:1;text-align:center;padding:4px 0;background:#0a0e1a;color:#475569;font-size:7px;">⊞ 调试</div>
+        </div>
+        <!-- Chat content (active tab) -->
+        <div style="background:#0F172A;height:95px;padding:4px;">
+          <div style="background:#1e293b;border-radius:4px;padding:3px 4px;margin-bottom:3px;color:#94a3b8;font-size:7px;">Agent: 截图完成</div>
+          <div style="background:#1a2742;border-radius:4px;padding:3px 4px;color:#f8fafc;font-size:7px;text-align:right">你: 继续</div>
+        </div>
+        <!-- Input -->
+        <div style="background:#1e293b;padding:4px 5px;">
+          <div style="background:#0F172A;border:1px solid #334155;border-radius:4px;padding:2px 4px;color:#475569;font-size:7px;">输入消息...</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — 顶部 Tab 切换</h3>
+      <p>对话 / VNC / 调试 三个 Tab 切换，☰ 打开会话列表抽屉。</p>
+      <div class="pros-cons" style="margin-top:8px;">
+        <div class="pros"><h4>优点</h4><ul><li>每个面板有完整空间</li><li>VNC 可全屏查看</li></ul></div>
+        <div class="cons"><h4>缺点</h4><ul><li>需切换才能看到 VNC</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option C -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0F172A;padding:12px;border-radius:8px;">
+      <div style="font-size:10px;color:#64748b;margin-bottom:6px;text-align:center">方案 C — 返回按钮</div>
+      <div style="border:2px solid #334155;border-radius:12px;overflow:hidden;width:120px;margin:0 auto;font-size:9px;">
+        <!-- Top bar with back -->
+        <div style="background:#1e293b;padding:4px 6px;display:flex;align-items:center;gap:4px;border-bottom:1px solid #334155;">
+          <span style="color:#94a3b8;">← 返回</span>
+          <span style="color:#f8fafc;flex:1;text-align:center;font-size:8px;">Session 1</span>
+          <span style="color:#22c55e;font-size:7px;">●</span>
+        </div>
+        <!-- VNC at top -->
+        <div style="background:#0a0a0f;height:50px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #1e293b;">
+          <span style="color:#475569;font-size:8px;">🖥 VNC 画面</span>
+        </div>
+        <!-- Chat -->
+        <div style="background:#0F172A;height:65px;padding:4px;border-bottom:1px solid #1e293b;">
+          <div style="background:#1e293b;border-radius:4px;padding:3px 4px;margin-bottom:3px;color:#94a3b8;font-size:7px;">Agent: 完成截图</div>
+          <div style="color:#475569;font-size:7px;text-align:right">你: 好的</div>
+        </div>
+        <!-- Input -->
+        <div style="background:#1e293b;padding:3px 5px;border-bottom:1px solid #334155;">
+          <div style="background:#0F172A;border:1px solid #334155;border-radius:4px;padding:2px 4px;color:#475569;font-size:7px;">输入...</div>
+        </div>
+        <!-- Debug bar -->
+        <div style="background:#0a0e1a;padding:3px 6px;display:flex;justify-content:space-between;">
+          <span style="color:#475569;font-size:7px;">⊞ Debug</span>
+          <span style="color:#475569;font-size:7px;">▲</span>
+        </div>
+      </div>
+      <div style="margin-top:8px;border:1px solid #334155;border-radius:8px;padding:6px;width:120px;margin:8px auto 0;">
+        <div style="font-size:7px;color:#64748b;margin-bottom:4px;">← 返回后看到会话列表</div>
+        <div style="background:#1e293b;border-radius:3px;padding:3px 5px;margin-bottom:2px;color:#f8fafc;font-size:7px;">▶ Session 1 <span style="color:#22c55e">●</span></div>
+        <div style="background:#0a0e1a;border-radius:3px;padding:3px 5px;margin-bottom:2px;color:#94a3b8;font-size:7px;">Session 2</div>
+        <div style="background:#0a0e1a;border-radius:3px;padding:3px 5px;color:#94a3b8;font-size:7px;">+ 新建</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — VNC顶部 + 返回按钮</h3>
+      <p>VNC 固定在顶部，顶栏有返回按钮，点击进入会话列表全屏页。</p>
+      <div class="pros-cons" style="margin-top:8px;">
+        <div class="pros"><h4>优点</h4><ul><li>导航最直观</li><li>VNC始终可见</li></ul></div>
+        <div class="cons"><h4>缺点</h4><ul><li>切换会话需两步</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px;">点击选择最合适的方案，或在终端说明你的想法</p>

@@ -140,35 +140,42 @@ export default function Page() {
       </div>
 
       {/* Main panels — desktop */}
-      <div className="flex-1 hidden xl:block">
-        <ResizablePanelGroup direction="horizontal" className="h-full">
-          {/* Left: Chat */}
-          <ResizablePanel defaultSize={35} minSize={25}>
-            <ChatPanel
-              key={activeSessionId ?? "none"}
-              sessionId={activeSessionId ?? ""}
-            />
-          </ResizablePanel>
-
-          <ResizableHandle withHandle />
-
-          {/* Right: VNC + Debug */}
-          <ResizablePanel defaultSize={65} minSize={35}>
-            <div className="flex flex-col h-full">
-              <div className="flex-1 min-h-0">
-                <VncPanel onRefresh={initSandbox} />
-              </div>
-              <DebugPanel
-                isCollapsed={debugCollapsed}
-                onToggle={() => setDebugCollapsed((v) => !v)}
+      <div className="flex-1 hidden xl:flex">
+        {activeSessionId === null ? (
+          <div className="flex-1 flex flex-col items-center justify-center gap-2">
+            <p className="text-sm font-medium text-[#475569]">No session selected</p>
+            <p className="text-xs text-[#334155]">Select a session from the sidebar, or create a new one.</p>
+          </div>
+        ) : (
+          <ResizablePanelGroup direction="horizontal" className="h-full w-full">
+            {/* Left: Chat */}
+            <ResizablePanel defaultSize={35} minSize={25}>
+              <ChatPanel
+                key={activeSessionId}
+                sessionId={activeSessionId}
               />
-            </div>
-          </ResizablePanel>
-        </ResizablePanelGroup>
+            </ResizablePanel>
+
+            <ResizableHandle withHandle />
+
+            {/* Right: VNC + Debug */}
+            <ResizablePanel defaultSize={65} minSize={35}>
+              <div className="flex flex-col h-full">
+                <div className="flex-1 min-h-0">
+                  <VncPanel onRefresh={initSandbox} />
+                </div>
+                <DebugPanel
+                  isCollapsed={debugCollapsed}
+                  onToggle={() => setDebugCollapsed((v) => !v)}
+                />
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        )}
       </div>
 
       {/* Mobile: VNC top + Chat + Debug bottom sheet */}
-      <div className="flex flex-col h-dvh xl:hidden">
+      <div className="flex-1 flex flex-col h-dvh xl:hidden">
         {/* Top nav bar */}
         <div className="flex items-center gap-3 px-3 py-2 bg-[#0a0e1a] border-b border-white/[0.06] shrink-0">
           <button
@@ -190,24 +197,33 @@ export default function Page() {
           )}
         </div>
 
-        {/* VNC panel — fixed 280px height */}
-        <div className="h-[280px] shrink-0">
-          <VncPanel onRefresh={initSandbox} />
-        </div>
+        {activeSessionId === null ? (
+          <div className="flex-1 flex flex-col items-center justify-center gap-2">
+            <p className="text-sm font-medium text-[#475569]">No session selected</p>
+            <p className="text-xs text-[#334155]">Tap ☰ to select or create a session.</p>
+          </div>
+        ) : (
+          <>
+            {/* VNC panel — fixed 280px height */}
+            <div className="h-[280px] shrink-0">
+              <VncPanel onRefresh={initSandbox} />
+            </div>
 
-        {/* Chat — fills remaining space */}
-        <div className="flex-1 min-h-0">
-          <ChatPanel
-            key={activeSessionId ?? "none"}
-            sessionId={activeSessionId ?? ""}
-          />
-        </div>
+            {/* Chat — fills remaining space */}
+            <div className="flex-1 min-h-0">
+              <ChatPanel
+                key={activeSessionId}
+                sessionId={activeSessionId}
+              />
+            </div>
 
-        {/* Debug bar at bottom */}
-        <DebugPanel
-          isCollapsed={debugCollapsed}
-          onToggle={() => setDebugCollapsed((v) => !v)}
-        />
+            {/* Debug bar at bottom */}
+            <DebugPanel
+              isCollapsed={debugCollapsed}
+              onToggle={() => setDebugCollapsed((v) => !v)}
+            />
+          </>
+        )}
 
         {/* Session drawer overlay */}
         <MobileSessionDrawer

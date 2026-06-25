@@ -102,9 +102,7 @@ export const useSessionStore = create<SessionStore>()(
           const sessions = state.sessions.filter((s) => s.id !== id);
           let activeSessionId = state.activeSessionId;
           if (activeSessionId === id) {
-            const newSession = createEmptySession();
-            sessions.unshift(newSession);
-            activeSessionId = newSession.id;
+            activeSessionId = sessions[0]?.id ?? null;
           }
           return { sessions, activeSessionId };
         });

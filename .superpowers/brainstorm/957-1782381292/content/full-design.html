@@ -1,0 +1,161 @@
+<h2>移动端完整设计方案</h2>
+<p class="subtitle">请确认以下设计，批准后开始写实现计划</p>
+
+<div class="split">
+
+  <!-- Left: Main layout -->
+  <div class="mockup">
+    <div class="mockup-header">主界面（正常状态）</div>
+    <div class="mockup-body" style="display:flex;gap:16px;align-items:flex-start;">
+
+      <!-- Phone -->
+      <div style="border:2px solid #334155;border-radius:18px;overflow:hidden;width:140px;min-height:300px;display:flex;flex-direction:column;background:#0F172A;font-size:8px;flex-shrink:0;">
+        <!-- Top nav bar -->
+        <div style="background:#0a0e1a;padding:5px 8px;display:flex;align-items:center;gap:4px;border-bottom:1px solid #334155;flex-shrink:0;">
+          <button style="background:none;border:none;color:#94a3b8;cursor:pointer;padding:2px;font-size:12px;">☰</button>
+          <span style="color:#f8fafc;flex:1;text-align:center;font-size:9px;font-weight:500;">Session 1</span>
+          <span style="color:#22c55e;font-size:7px;">● 运行中</span>
+        </div>
+        <!-- VNC panel ~280px → scaled to ~90px in mockup -->
+        <div style="background:#0a0a0f;height:90px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #1e293b;position:relative;">
+          <div style="color:#334155;font-size:20px;">🖥</div>
+          <div style="position:absolute;bottom:3px;right:5px;background:black/60;border:1px solid #334155;border-radius:3px;padding:1px 3px;color:#94a3b8;font-size:6px;">↺ New Desktop</div>
+        </div>
+        <!-- Chat -->
+        <div style="background:#0F172A;flex:1;padding:5px;display:flex;flex-direction:column;gap:3px;overflow:hidden;">
+          <div style="background:#1e293b;border-radius:4px;padding:3px 5px;color:#94a3b8;font-size:7px;">Agent: 截图完成，正在分析界面...</div>
+          <div style="background:#1a2742;border-radius:4px;padding:3px 5px;color:#f8fafc;font-size:7px;align-self:flex-end">你: 点击登录按钮</div>
+          <div style="background:#1e293b;border-radius:4px;padding:3px 5px;color:#94a3b8;font-size:7px;">Agent: 找到按钮，点击中...</div>
+        </div>
+        <!-- Input bar -->
+        <div style="background:#1e293b;padding:4px 6px;flex-shrink:0;border-top:1px solid #334155;display:flex;gap:3px;align-items:center;">
+          <div style="background:#0F172A;border:1px solid #334155;border-radius:4px;padding:2px 5px;color:#475569;font-size:7px;flex:1;">输入消息...</div>
+          <div style="background:#22c55e;border-radius:3px;padding:2px 4px;color:#000;font-size:7px;font-weight:bold;">↑</div>
+        </div>
+        <!-- Debug bar (collapsed) -->
+        <div style="background:#0a0e1a;padding:3px 8px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #334155;flex-shrink:0;">
+          <div style="display:flex;align-items:center;gap:3px;">
+            <span style="color:#94a3b8;font-size:8px;">⊞</span>
+            <span style="color:#94a3b8;font-size:7px;">Debug</span>
+            <span style="background:#22c55e/10;color:#22c55e;font-size:6px;padding:0 3px;border-radius:8px;">Idle</span>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <span style="color:#22c55e;font-size:7px;">12</span>
+            <span style="color:#475569;font-size:6px;">calls</span>
+            <span style="color:#475569;font-size:8px;">▲</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size:11px;color:#94a3b8;line-height:1.6;">
+        <div style="color:#f8fafc;font-weight:600;margin-bottom:6px;">布局说明</div>
+        <div style="margin-bottom:4px;">① <b style="color:#e2e8f0">顶部导航栏</b><br>☰ 汉堡 + 当前会话名 + 状态</div>
+        <div style="margin-bottom:4px;">② <b style="color:#e2e8f0">VNC 面板</b><br>高度 ~280px，iframe 等比缩放</div>
+        <div style="margin-bottom:4px;">③ <b style="color:#e2e8f0">Chat</b><br>flex-1，自动填充剩余空间</div>
+        <div style="margin-bottom:4px;">④ <b style="color:#e2e8f0">输入框</b><br>固定底部，发送按钮右侧</div>
+        <div>⑤ <b style="color:#e2e8f0">Debug 条</b><br>默认收起，点击展开 events/stats</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Drawer state -->
+  <div class="mockup">
+    <div class="mockup-header">点击 ☰ 后 — 会话抽屉</div>
+    <div class="mockup-body" style="display:flex;gap:16px;align-items:flex-start;">
+
+      <!-- Phone with drawer -->
+      <div style="border:2px solid #334155;border-radius:18px;overflow:hidden;width:140px;min-height:300px;display:flex;flex-direction:column;background:#0F172A;font-size:8px;flex-shrink:0;position:relative;">
+        <!-- Dimmed background content -->
+        <div style="opacity:0.3;">
+          <div style="background:#0a0e1a;padding:5px 8px;display:flex;align-items:center;gap:4px;border-bottom:1px solid #334155;">
+            <span style="color:#94a3b8;font-size:12px;">☰</span>
+            <span style="color:#f8fafc;flex:1;text-align:center;font-size:9px;">Session 1</span>
+          </div>
+          <div style="background:#0a0a0f;height:90px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #1e293b;">
+            <div style="color:#334155;font-size:20px;">🖥</div>
+          </div>
+          <div style="background:#0F172A;height:80px;"></div>
+        </div>
+        <!-- Drawer overlay -->
+        <div style="position:absolute;top:0;left:0;bottom:0;right:0;background:rgba(0,0,0,0.5);"></div>
+        <!-- Drawer panel -->
+        <div style="position:absolute;top:0;left:0;bottom:0;width:78%;background:#0a0e1a;border-right:1px solid #334155;display:flex;flex-direction:column;z-index:10;">
+          <!-- Drawer header -->
+          <div style="padding:8px 8px 6px;border-bottom:1px solid #334155;">
+            <div style="background:#1e293b;border-radius:4px;padding:3px 6px;display:flex;align-items:center;gap:3px;color:#94a3b8;font-size:7px;">
+              <span>＋</span> 新建会话
+            </div>
+          </div>
+          <!-- Session list -->
+          <div style="flex:1;padding:4px;overflow:hidden;">
+            <div style="background:white/10;border-radius:4px;padding:3px 5px;margin-bottom:2px;display:flex;align-items:center;gap:3px;">
+              <span style="color:#f8fafc;font-size:7px;flex:1;">Session 1</span>
+              <span style="width:5px;height:5px;border-radius:50%;background:#22c55e;"></span>
+            </div>
+            <div style="border-radius:4px;padding:3px 5px;margin-bottom:2px;display:flex;align-items:center;gap:3px;">
+              <span style="color:#94a3b8;font-size:7px;flex:1;">Session 2</span>
+              <span style="width:5px;height:5px;border-radius:50%;background:#f59e0b;"></span>
+            </div>
+            <div style="border-radius:4px;padding:3px 5px;margin-bottom:2px;">
+              <span style="color:#94a3b8;font-size:7px;">Session 3</span>
+            </div>
+          </div>
+          <!-- Settings at bottom -->
+          <div style="padding:5px 8px;border-top:1px solid #334155;display:flex;align-items:center;gap:3px;">
+            <span style="color:#475569;font-size:10px;">⚙</span>
+            <span style="color:#475569;font-size:7px;">设置</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size:11px;color:#94a3b8;line-height:1.6;">
+        <div style="color:#f8fafc;font-weight:600;margin-bottom:6px;">抽屉说明</div>
+        <div style="margin-bottom:4px;">• 从<b style="color:#e2e8f0">左侧滑入</b><br>占屏幕宽度约 75%</div>
+        <div style="margin-bottom:4px;">• 右侧半透明<b style="color:#e2e8f0">遮罩</b><br>点击遮罩关闭</div>
+        <div style="margin-bottom:4px;">• 顶部：<b style="color:#e2e8f0">+ 新建会话</b></div>
+        <div style="margin-bottom:4px;">• 列表：会话名 +<br>运行中 🟡 / 有新消息 🟢</div>
+        <div>• 底部：<b style="color:#e2e8f0">⚙ 设置</b><br>复用现有 SettingsDialog</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="section" style="margin-top:20px;">
+  <h3>文件改动范围</h3>
+  <table style="width:100%;font-size:12px;border-collapse:collapse;">
+    <thead>
+      <tr style="color:#475569;border-bottom:1px solid #334155;">
+        <th style="text-align:left;padding:6px 8px;">文件</th>
+        <th style="text-align:left;padding:6px 8px;">改动</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid #1e293b;">
+        <td style="padding:5px 8px;color:#e2e8f0;font-family:monospace;font-size:11px;">app/page.tsx</td>
+        <td style="padding:5px 8px;color:#94a3b8;">移动端区块重构：顶部导航栏 + VncPanel + Chat + Debug；添加 drawerOpen 状态</td>
+      </tr>
+      <tr style="border-bottom:1px solid #1e293b;">
+        <td style="padding:5px 8px;color:#e2e8f0;font-family:monospace;font-size:11px;">components/chat-panel/<br>mobile-session-drawer.tsx</td>
+        <td style="padding:5px 8px;color:#94a3b8;">新建：左滑抽屉组件，包含会话列表 + 新建 + 设置，复用 SessionItem 逻辑</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="options" style="margin-top:20px;">
+  <div class="option" data-choice="approve" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content">
+      <h3>批准设计，开始写实现计划</h3>
+      <p>VNC 顶部固定 ~280px，汉堡菜单左滑抽屉，会话列表复用现有逻辑</p>
+    </div>
+  </div>
+  <div class="option" data-choice="revise" onclick="toggleSelect(this)">
+    <div class="letter">↩</div>
+    <div class="content">
+      <h3>需要调整</h3>
+      <p>在终端说明需要修改的地方</p>
+    </div>
+  </div>
+</div>
