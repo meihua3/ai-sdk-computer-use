@@ -1,99 +1,41 @@
+// components/chat-panel/chat-panel.tsx
 "use client";
 
-import { useEffect } from "react";
-import { useChat } from "@ai-sdk/react";
-import { toast } from "sonner";
+import { useState } from "react";
 import { Input } from "@/components/input";
 import { useScrollToBottom } from "@/lib/use-scroll-to-bottom";
-import { useSessionStore } from "@/lib/store/session-store";
-import { useEventSync } from "@/lib/hooks/use-event-sync";
+import { useMultiChatStore } from "@/lib/store/multi-chat-store";
 import { ToolCallCard } from "./tool-call-card";
-import { ABORTED } from "@/lib/utils";
 import { Streamdown } from "streamdown";
 import { cn } from "@/lib/utils";
 import type { UIMessage } from "ai";
 
 type ChatPanelProps = {
-  sandboxId: string | null;
+  sessionId: string;
   testMessage?: string;
 };
 
-export function ChatPanel({ sandboxId, testMessage }: ChatPanelProps) {
+export function ChatPanel({ sessionId, testMessage }: ChatPanelProps) {
   const [containerRef, endRef] = useScrollToBottom();
-  const activeSession = useSessionStore((s) => s.activeSession());
-  const updateMessages = useSessionStore((s) => s.updateMessages);
-  const updateSessionTitle = useSessionStore((s) => s.updateSessionTitle);
+  const [input, setInput] = useState("");
 
-  const {
-    messages,
-    input,
-    handleInputChange,
-    handleSubmit,
-    append,
-    status,
-    stop: stopGeneration,
-    setMessages,
-  } = useChat({
-    api: "/api/chat",
-    id: activeSession?.id ?? undefined,
-    body: { sandboxId },
-    maxSteps: 30,
-    initialMessages: activeSession?.messages ?? [],
-    onError: (error) => {
-      console.error(error);
-      toast.error("There was an error", {
-        description: "Please try again later.",
-        richColors: true,
-        position: "top-center",
-      });
-    },
-  });
+  const chatEntry = useMultiChatStore((s) => s.sessions[sessionId]);
+  const messages = chatEntry?.messages ?? [];
+  const status = chatEntry?.status ?? "ready";
 
-  // Sync messages back to session store for persistence
-  useEffect(() => {
-    if (activeSession?.id) {
-      updateMessages(activeSession.id, messages);
-      const firstUser = messages.find((m) => m.role === "user");
-      if (firstUser && activeSession.title === "New Session") {
-        const content =
-          typeof firstUser.content === "string" ? firstUser.content : "";
-        if (content) updateSessionTitle(activeSession.id, content);
-      }
-    }
-  }, [messages, activeSession?.id, updateMessages, updateSessionTitle, activeSession?.title]);
-
-  // Bridge useChat messages → event pipeline
-  useEventSync(messages, status, activeSession?.id ?? null);
-
-  const stop = () => {
-    stopGeneration();
-    const lastMessage = messages.at(-1);
-    const lastPart = lastMessage?.parts.at(-1);
-    if (
-      lastMessage?.role === "assistant" &&
-      lastPart?.type === "tool-invocation"
-    ) {
-      setMessages((prev) => [
-        ...prev.slice(0, -1),
-        {
-          ...lastMessage,
-          parts: [
-            ...lastMessage.parts.slice(0, -1),
-            {
-              ...lastPart,
-              toolInvocation: {
-                ...lastPart.toolInvocation,
-                state: "result",
-                result: ABORTED,
-              },
-            },
-          ],
-        },
-      ]);
-    }
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
   };
 
-  const isLoading = status !== "ready";
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = input.trim();
+    if (!trimmed || !chatEntry) return;
+    chatEntry.submit(trimmed);
+    setInput("");
+  };
+
+  const isLoading = status !== "ready" && status !== "error";
 
   return (
     <div className="flex flex-col h-full bg-[#0F172A]">
@@ -125,7 +67,9 @@ export function ChatPanel({ sandboxId, testMessage }: ChatPanelProps) {
       {testMessage && (
         <div className="px-3 pt-2">
           <button
-            onClick={() => !isLoading && append({ role: "user", content: testMessage })}
+            onClick={() =>
+              !isLoading && chatEntry?.submit(testMessage)
+            }
             disabled={isLoading}
             className="w-full py-2 rounded-lg bg-[#22c55e] hover:bg-[#16a34a] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-medium transition-colors"
           >
@@ -142,7 +86,7 @@ export function ChatPanel({ sandboxId, testMessage }: ChatPanelProps) {
             isInitializing={false}
             isLoading={isLoading}
             status={status}
-            stop={stop}
+            stop={chatEntry?.stop ?? (() => {})}
           />
         </form>
       </div>
