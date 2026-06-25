@@ -1,6 +1,9 @@
+// components/vnc-panel/debug-panel.tsx
 "use client";
 
-import { useEventStore } from "@/lib/store/event-store";
+import { useState } from "react";
+import { useSessionStore } from "@/lib/store/session-store";
+import { useMultiChatStore } from "@/lib/store/multi-chat-store";
 import { cn } from "@/lib/utils";
 import {
   Camera,
@@ -117,16 +120,64 @@ function formatDuration(ms: number): string {
   return `${(ms / 1000).toFixed(1)}s`;
 }
 
+function toolStats(events: AgentEvent[]) {
+  const completed = events.filter((e) => e.duration != null);
+  const total = completed.reduce((s, e) => s + (e.duration ?? 0), 0);
+  return {
+    count: events.length,
+    totalMs: total,
+    avgMs:
+      completed.length > 0 ? Math.round(total / completed.length) : null,
+  };
+}
+
+const TOOL_ICONS: Record<string, React.ReactNode> = {
+  computer: <Camera className="w-3 h-3 text-[#94a3b8]" />,
+  bash: <Terminal className="w-3 h-3 text-[#94a3b8]" />,
+};
+
 export function DebugPanel({ isCollapsed, onToggle }: DebugPanelProps) {
-  const events = useEventStore((s) => s.events);
-  const agentStatus = useEventStore((s) => s.agentStatus);
+  const [activeTab, setActiveTab] = useState<"events" | "stats">("events");
+
+  const activeSessionId = useSessionStore((s) => s.activeSessionId);
+  const events = useSessionStore(
+    (s) => s.sessions.find((sess) => sess.id === activeSessionId)?.events ?? []
+  );
+  const chatStatus = useMultiChatStore(
+    (s) =>
+      activeSessionId
+        ? s.sessions[activeSessionId]?.status ?? "ready"
+        : "ready"
+  );
+
+  const agentStatus: AgentStatus =
+    chatStatus === "streaming" || chatStatus === "submitted"
+      ? { type: "running", startedAt: 0 }
+      : chatStatus === "error"
+        ? { type: "error", message: "Chat error occurred" }
+        : { type: "idle" };
 
   const completedEvents = events.filter((e) => e.duration != null);
   const totalCalls = events.length;
-  const totalDuration = completedEvents.reduce((sum, e) => sum + (e.duration ?? 0), 0);
-  const avgDuration = completedEvents.length > 0
-    ? Math.round(totalDuration / completedEvents.length)
-    : null;
+  const totalDuration = completedEvents.reduce(
+    (sum, e) => sum + (e.duration ?? 0),
+    0
+  );
+  const avgDuration =
+    completedEvents.length > 0
+      ? Math.round(totalDuration / completedEvents.length)
+      : null;
+
+  // Group events by tool for stats tab
+  const byTool = events.reduce<Record<string, AgentEvent[]>>((acc, e) => {
+    if (!acc[e.tool]) acc[e.tool] = [];
+    acc[e.tool].push(e);
+    return acc;
+  }, {});
+  const toolBreakdown = Object.entries(byTool).map(([tool, toolEvents]) => ({
+    tool,
+    ...toolStats(toolEvents),
+  }));
 
   return (
     <div className="flex flex-col border-t border-white/[0.06] bg-[#0F172A]">
@@ -140,7 +191,7 @@ export function DebugPanel({ isCollapsed, onToggle }: DebugPanelProps) {
           <AgentStatusBadge status={agentStatus} />
         </div>
 
-        {/* Stats — always visible in header */}
+        {/* Summary stats always visible */}
         <div className="flex items-center gap-3 mr-2">
           <StatCell
             label="calls"
@@ -164,15 +215,95 @@ export function DebugPanel({ isCollapsed, onToggle }: DebugPanelProps) {
       </button>
 
       {!isCollapsed && (
-        <div className="flex-1 overflow-y-auto max-h-48 py-1">
-          {events.length === 0 ? (
-            <div className="px-3 py-4 text-center text-xs text-[#475569]">
-              No tool calls yet
+        <div className="flex flex-col flex-1">
+          {/* Tab toggle */}
+          <div className="flex border-b border-white/[0.06]">
+            {(["events", "stats"] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveTab(tab);
+                }}
+                className={cn(
+                  "flex-1 py-1.5 text-[10px] uppercase tracking-wide font-medium transition-colors",
+                  activeTab === tab
+                    ? "text-[#22c55e] border-b border-[#22c55e]"
+                    : "text-[#475569] hover:text-[#94a3b8]"
+                )}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          {/* Events tab */}
+          {activeTab === "events" && (
+            <div className="overflow-y-auto max-h-40 py-1">
+              {events.length === 0 ? (
+                <div className="px-3 py-4 text-center text-xs text-[#475569]">
+                  No tool calls yet
+                </div>
+              ) : (
+                [...events].reverse().map((event) => (
+                  <EventRow key={event.id} event={event} />
+                ))
+              )}
             </div>
-          ) : (
-            [...events].reverse().map((event) => (
-              <EventRow key={event.id} event={event} />
-            ))
+          )}
+
+          {/* Stats tab */}
+          {activeTab === "stats" && (
+            <div className="overflow-y-auto max-h-40 py-2 px-3">
+              {events.length === 0 ? (
+                <div className="py-4 text-center text-xs text-[#475569]">
+                  No tool calls yet
+                </div>
+              ) : (
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="text-[#475569] text-[10px] uppercase tracking-wide">
+                      <th className="text-left pb-2 font-normal">Tool</th>
+                      <th className="text-right pb-2 font-normal">Calls</th>
+                      <th className="text-right pb-2 font-normal">Total</th>
+                      <th className="text-right pb-2 font-normal">Avg</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Overall row */}
+                    <tr className="text-[#94a3b8] border-b border-white/[0.04]">
+                      <td className="py-1.5 font-medium">All</td>
+                      <td className="text-right tabular-nums">{totalCalls}</td>
+                      <td className="text-right tabular-nums font-mono">
+                        {totalDuration > 0
+                          ? formatDuration(totalDuration)
+                          : "—"}
+                      </td>
+                      <td className="text-right tabular-nums font-mono">
+                        {avgDuration != null
+                          ? formatDuration(avgDuration)
+                          : "—"}
+                      </td>
+                    </tr>
+                    {toolBreakdown.map(({ tool, count, totalMs, avgMs }) => (
+                      <tr key={tool} className="text-[#64748b]">
+                        <td className="py-1.5 flex items-center gap-1.5">
+                          {TOOL_ICONS[tool] ?? null}
+                          {tool}
+                        </td>
+                        <td className="text-right tabular-nums">{count}</td>
+                        <td className="text-right tabular-nums font-mono">
+                          {totalMs > 0 ? formatDuration(totalMs) : "—"}
+                        </td>
+                        <td className="text-right tabular-nums font-mono">
+                          {avgMs != null ? formatDuration(avgMs) : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
           )}
         </div>
       )}
