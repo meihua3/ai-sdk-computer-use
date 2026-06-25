@@ -21,7 +21,7 @@ import { VncPanel } from "@/components/vnc-panel/vnc-panel";
 import { DebugPanel } from "@/components/vnc-panel/debug-panel";
 
 export default function Page() {
-  const [debugCollapsed, setDebugCollapsed] = useState(false);
+  const [debugCollapsed, setDebugCollapsed] = useState(true);
 
   const sessions = useSessionStore((s) => s.sessions);
   const activeSessionId = useSessionStore((s) => s.activeSessionId);
@@ -154,14 +154,17 @@ export default function Page() {
         </ResizablePanelGroup>
       </div>
 
-      {/* Mobile: Chat only */}
-      <div className="flex-1 xl:hidden">
-        <div className="flex items-center justify-center fixed left-1/2 -translate-x-1/2 top-5 shadow-md text-xs mx-auto rounded-lg h-8 w-fit bg-blue-600 text-white px-3 py-2 z-50">
-          Headless mode
+      {/* Mobile: Chat + Debug bottom sheet */}
+      <div className="flex flex-col h-dvh xl:hidden">
+        <div className="flex-1 min-h-0">
+          <ChatPanel
+            key={activeSessionId ?? "none"}
+            sessionId={activeSessionId ?? ""}
+          />
         </div>
-        <ChatPanel
-          key={activeSessionId ?? "none"}
-          sessionId={activeSessionId ?? ""}
+        <DebugPanel
+          isCollapsed={debugCollapsed}
+          onToggle={() => setDebugCollapsed((v) => !v)}
         />
       </div>
     </div>
