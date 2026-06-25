@@ -1,3 +1,4 @@
+// app/page.tsx
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -8,10 +9,12 @@ import {
 } from "@/components/ui/resizable";
 import { toast } from "sonner";
 import { useSessionStore } from "@/lib/store/session-store";
-import { useEventStore } from "@/lib/store/event-store";
+import { useMultiChatStore } from "@/lib/store/multi-chat-store";
+import { useNotificationStore } from "@/lib/store/notification-store";
 import { useSessionSandbox } from "@/lib/hooks/use-session-sandbox";
 import { useSandboxUrlStore } from "@/lib/store/sandbox-url-store";
 import { killDesktop } from "@/lib/sandbox/utils";
+import { AgentWorker } from "@/components/agent-worker";
 import { SessionSidebar } from "@/components/chat-panel/session-sidebar";
 import { ChatPanel } from "@/components/chat-panel/chat-panel";
 import { VncPanel } from "@/components/vnc-panel/vnc-panel";
@@ -20,13 +23,11 @@ import { DebugPanel } from "@/components/vnc-panel/debug-panel";
 export default function Page() {
   const [debugCollapsed, setDebugCollapsed] = useState(false);
 
+  const sessions = useSessionStore((s) => s.sessions);
   const activeSessionId = useSessionStore((s) => s.activeSessionId);
   const createSession = useSessionStore((s) => s.createSession);
   const deleteSession = useSessionStore((s) => s.deleteSession);
   const setActiveSession = useSessionStore((s) => s.setActiveSession);
-  const activeSandboxId = useSessionStore((s) => s.activeSandboxId());
-
-  const resetEvents = useEventStore((s) => s.reset);
 
   const { initSandbox } = useSessionSandbox();
 
@@ -63,35 +64,32 @@ export default function Page() {
     return () => window.removeEventListener("beforeunload", kill);
   }, [activeSessionId]);
 
-  // Create new session — leave current sandbox running
+  // Create new session — confirm only if active session is running
   const handleCreateSession = useCallback(() => {
-    if (useEventStore.getState().agentStatus.type === "running") {
+    const activeId = useSessionStore.getState().activeSessionId;
+    const activeStatus = activeId
+      ? useMultiChatStore.getState().sessions[activeId]?.status
+      : "ready";
+    if (activeStatus === "submitted" || activeStatus === "streaming") {
       const confirmed = window.confirm(
         "Agent is running. Create new session anyway?"
       );
       if (!confirmed) return;
     }
-    resetEvents();
     createSession();
-  }, [resetEvents, createSession]);
+  }, [createSession]);
 
-  // Switch session — immediate, no network call
+  // Switch session — instant, agent keeps running in background
   const handleSwitchSession = useCallback(
     (id: string) => {
       if (id === activeSessionId) return;
-      if (useEventStore.getState().agentStatus.type === "running") {
-        const confirmed = window.confirm(
-          "Agent is running. Stop it and switch session?"
-        );
-        if (!confirmed) return;
-      }
-      resetEvents();
       setActiveSession(id);
+      useNotificationStore.getState().markRead(id);
     },
-    [activeSessionId, resetEvents, setActiveSession]
+    [activeSessionId, setActiveSession]
   );
 
-  // Delete session — kill its sandbox, then remove
+  // Delete session — kill sandbox, clear stores, remove
   const handleDeleteSession = useCallback(
     async (id: string) => {
       const session = useSessionStore.getState().sessions.find((s) => s.id === id);
@@ -101,20 +99,24 @@ export default function Page() {
           "Delete this session? The desktop will be closed."
         );
         if (!confirmed) return;
-        resetEvents();
       }
       if (session?.sandboxId) {
         killDesktop(session.sandboxId).catch(() => {});
       }
       useSandboxUrlStore.getState().clearUrl(id);
+      useNotificationStore.getState().markRead(id);
       deleteSession(id);
     },
-    [activeSessionId, resetEvents, deleteSession]
+    [activeSessionId, deleteSession]
   );
-
 
   return (
     <div className="flex h-dvh bg-[#0F172A] text-[#f8fafc]">
+      {/* AgentWorker for every session — no UI, keeps useChat alive */}
+      {sessions.map((session) => (
+        <AgentWorker key={session.id} sessionId={session.id} />
+      ))}
+
       {/* Session Sidebar — desktop only */}
       <div className="hidden xl:flex">
         <SessionSidebar
@@ -129,7 +131,10 @@ export default function Page() {
         <ResizablePanelGroup direction="horizontal" className="h-full">
           {/* Left: Chat */}
           <ResizablePanel defaultSize={35} minSize={25}>
-            <ChatPanel key={activeSessionId ?? "none"} sandboxId={activeSandboxId} />
+            <ChatPanel
+              key={activeSessionId ?? "none"}
+              sessionId={activeSessionId ?? ""}
+            />
           </ResizablePanel>
 
           <ResizableHandle withHandle />
@@ -154,7 +159,10 @@ export default function Page() {
         <div className="flex items-center justify-center fixed left-1/2 -translate-x-1/2 top-5 shadow-md text-xs mx-auto rounded-lg h-8 w-fit bg-blue-600 text-white px-3 py-2 z-50">
           Headless mode
         </div>
-        <ChatPanel key={activeSessionId ?? "none"} sandboxId={activeSandboxId} />
+        <ChatPanel
+          key={activeSessionId ?? "none"}
+          sessionId={activeSessionId ?? ""}
+        />
       </div>
     </div>
   );
