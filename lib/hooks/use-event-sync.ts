@@ -1,6 +1,6 @@
+// lib/hooks/use-event-sync.ts
 import { useEffect, useRef } from "react";
 import type { UIMessage } from "ai";
-import { useEventStore } from "@/lib/store/event-store";
 import { useSessionStore } from "@/lib/store/session-store";
 import type { AgentEvent, ComputerToolPayload, BashToolPayload } from "@/lib/types";
 
@@ -15,33 +15,26 @@ export function useEventSync(
   status: ChatStatus,
   sessionId: string | null
 ) {
-  const { addEvent, updateEvent, setAgentStatus } = useEventStore();
   const { appendEvent, updateEvent: persistEvent } = useSessionStore();
   const trackedIds = useRef<Set<string>>(new Set());
   const startTimes = useRef<Map<string, number>>(new Map());
   const prevSessionId = useRef<string | null>(null);
 
-  // Reset tracking state when session changes
+  // Reset tracking state when session changes, pre-populate from existing events
+  // to avoid re-adding historical tool calls as duplicates on mount
   useEffect(() => {
     if (sessionId !== prevSessionId.current) {
-      trackedIds.current.clear();
+      const existingEvents =
+        useSessionStore
+          .getState()
+          .sessions.find((s) => s.id === sessionId)?.events ?? [];
+      trackedIds.current = new Set(existingEvents.map((e) => e.id));
       startTimes.current.clear();
       prevSessionId.current = sessionId;
     }
   }, [sessionId]);
 
-  // Sync agent status from chat status
-  useEffect(() => {
-    if (status === "streaming") {
-      setAgentStatus({ type: "running", startedAt: Date.now() });
-    } else if (status === "ready") {
-      setAgentStatus({ type: "idle" });
-    } else if (status === "error") {
-      setAgentStatus({ type: "error", message: "Chat error occurred" });
-    }
-  }, [status, setAgentStatus]);
-
-  // Sync tool call events from messages
+  // Sync tool call events from messages into session store
   useEffect(() => {
     for (const message of messages) {
       if (message.role !== "assistant") continue;
@@ -81,22 +74,24 @@ export function useEventSync(
                   payload: args as BashToolPayload,
                 };
 
-          addEvent(event);
           if (sessionId) appendEvent(sessionId, event);
         }
 
         if (state === "result" && trackedIds.current.has(eventId)) {
           const startTime = startTimes.current.get(eventId) ?? Date.now();
           const duration = Date.now() - startTime;
-          const resultStr = typeof result === "string" ? result : JSON.stringify(result);
+          const resultStr =
+            typeof result === "string" ? result : JSON.stringify(result);
           const isAborted = resultStr === "User aborted";
           const newStatus = isAborted ? "aborted" : "success";
 
           const patch: Partial<AgentEvent> = { status: newStatus, duration };
-          updateEvent(eventId, patch);
           if (sessionId) persistEvent(sessionId, eventId, patch);
         }
       }
     }
-  }, [messages, sessionId, addEvent, updateEvent, appendEvent, persistEvent]);
+  }, [messages, sessionId, appendEvent, persistEvent]);
+
+  // status parameter kept for API compatibility — AgentWorker uses it
+  void status;
 }

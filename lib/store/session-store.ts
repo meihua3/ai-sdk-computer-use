@@ -147,7 +147,9 @@ export const useSessionStore = create<SessionStore>()(
         set((state) => ({
           sessions: state.sessions.map((s) =>
             s.id === id
-              ? { ...s, events: [...s.events, event], updatedAt: Date.now() }
+              ? s.events.some((e) => e.id === event.id)
+                ? s
+                : { ...s, events: [...s.events, event], updatedAt: Date.now() }
               : s
           ),
         }));
