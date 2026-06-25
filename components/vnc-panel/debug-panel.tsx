@@ -60,34 +60,105 @@ function AgentStatusBadge({ status }: { status: AgentStatus }) {
   );
 }
 
+function formatTime(ts: number): string {
+  return new Date(ts).toLocaleTimeString();
+}
+
+function truncateId(id: string): string {
+  return id.length > 32 ? id.slice(0, 32) + "…" : id;
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex gap-2 min-w-0">
+      <span className="text-[#475569] shrink-0 w-20">{label}</span>
+      <span className="text-[#94a3b8] break-all">{value}</span>
+    </div>
+  );
+}
+
 function EventRow({ event }: { event: AgentEvent }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   const label =
     event.tool === "computer"
       ? event.payload.action
       : event.payload.command.slice(0, 30);
   const durationLabel =
-    event.duration != null ? `${event.duration}ms` : null;
+    event.duration != null ? formatDuration(event.duration) : null;
+
+  // Collect non-null payload fields for the detail block
+  const payloadFields: { label: string; value: string }[] = [];
+  if (event.tool === "computer") {
+    const p = event.payload;
+    payloadFields.push({ label: "action", value: p.action });
+    if (p.coordinate != null)
+      payloadFields.push({
+        label: "coordinate",
+        value: `[${p.coordinate[0]}, ${p.coordinate[1]}]`,
+      });
+    if (p.text != null) payloadFields.push({ label: "text", value: p.text });
+    if (p.scroll_direction != null)
+      payloadFields.push({ label: "scroll_dir", value: p.scroll_direction });
+    if (p.scroll_amount != null)
+      payloadFields.push({
+        label: "scroll_amt",
+        value: String(p.scroll_amount),
+      });
+    if (p.duration != null)
+      payloadFields.push({ label: "wait_ms", value: String(p.duration) });
+  } else {
+    payloadFields.push({ label: "command", value: event.payload.command });
+  }
 
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 rounded group">
-      <StatusIcon status={event.status} />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
-          {event.tool === "computer" ? (
-            <Camera className="w-3 h-3 text-[#94a3b8] shrink-0" />
-          ) : (
-            <Terminal className="w-3 h-3 text-[#94a3b8] shrink-0" />
-          )}
-          <span className="text-xs text-[#e2e8f0] font-mono truncate">
-            {label}
-          </span>
+    <div className="rounded overflow-hidden">
+      {/* Summary row — always visible, click to toggle */}
+      <div
+        className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 cursor-pointer select-none"
+        onClick={() => setIsExpanded((v) => !v)}
+      >
+        <StatusIcon status={event.status} />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            {event.tool === "computer" ? (
+              <Camera className="w-3 h-3 text-[#94a3b8] shrink-0" />
+            ) : (
+              <Terminal className="w-3 h-3 text-[#94a3b8] shrink-0" />
+            )}
+            <span className="text-xs text-[#e2e8f0] font-mono truncate">
+              {label}
+            </span>
+          </div>
         </div>
-      </div>
-      {durationLabel && (
-        <span className="text-[10px] text-[#475569] flex items-center gap-0.5">
-          <Clock className="w-2.5 h-2.5" />
-          {durationLabel}
+        {durationLabel && (
+          <span className="text-[10px] text-[#475569] flex items-center gap-0.5">
+            <Clock className="w-2.5 h-2.5" />
+            {durationLabel}
+          </span>
+        )}
+        <span className="text-[10px] text-[#334155] shrink-0 ml-1">
+          {isExpanded ? "▲" : "▼"}
         </span>
+      </div>
+
+      {/* Detail block — shown when expanded */}
+      {isExpanded && (
+        <div className="bg-white/[0.02] border-t border-white/[0.04] px-3 py-2 font-mono text-[10px] space-y-1">
+          <DetailRow label="id" value={truncateId(event.id)} />
+          <DetailRow label="time" value={formatTime(event.timestamp)} />
+          <DetailRow label="tool" value={event.tool} />
+          <DetailRow label="status" value={event.status} />
+          <DetailRow
+            label="duration"
+            value={
+              event.duration != null ? formatDuration(event.duration) : "—"
+            }
+          />
+          {payloadFields.map(({ label, value }) => (
+            <DetailRow key={label} label={label} value={value} />
+          ))}
+        </div>
       )}
     </div>
   );
