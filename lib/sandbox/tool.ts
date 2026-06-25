@@ -133,6 +133,29 @@ export const computerTool = (sandboxId: string) =>
             text: `Double clicked at ${x}, ${y}`,
           };
         }
+        case "triple_click": {
+          if (!coordinate)
+            throw new Error("Coordinate required for triple click action");
+          const [x, y] = coordinate;
+          await sandbox.runCommand({
+            cmd: "xdotool",
+            args: [
+              "mousemove",
+              "--sync",
+              String(x),
+              String(y),
+              "click",
+              "--repeat",
+              "3",
+              "1",
+            ],
+            env: DISPLAY_ENV,
+          });
+          return {
+            type: "text" as const,
+            text: `Triple clicked at ${x}, ${y}`,
+          };
+        }
         case "right_click": {
           if (!coordinate)
             throw new Error("Coordinate required for right click action");

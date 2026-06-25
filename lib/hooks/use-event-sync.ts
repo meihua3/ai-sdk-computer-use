@@ -19,6 +19,16 @@ export function useEventSync(
   const { appendEvent, updateEvent: persistEvent } = useSessionStore();
   const trackedIds = useRef<Set<string>>(new Set());
   const startTimes = useRef<Map<string, number>>(new Map());
+  const prevSessionId = useRef<string | null>(null);
+
+  // Reset tracking state when session changes
+  useEffect(() => {
+    if (sessionId !== prevSessionId.current) {
+      trackedIds.current.clear();
+      startTimes.current.clear();
+      prevSessionId.current = sessionId;
+    }
+  }, [sessionId]);
 
   // Sync agent status from chat status
   useEffect(() => {

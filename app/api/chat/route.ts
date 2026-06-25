@@ -1,4 +1,9 @@
-import { anthropic } from "@ai-sdk/anthropic";
+import { createAnthropic } from "@ai-sdk/anthropic";
+
+const anthropic = createAnthropic({
+  baseURL: "https://www.packyapi.com/v1",
+  apiKey: process.env.ANTHROPIC_API_KEY ?? "",
+});
 import { streamText, UIMessage } from "ai";
 import { killDesktop } from "@/lib/sandbox/utils";
 import { bashTool, computerTool } from "@/lib/sandbox/tool";

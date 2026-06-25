@@ -15,9 +15,10 @@ import type { UIMessage } from "ai";
 
 type ChatPanelProps = {
   sandboxId: string | null;
+  testMessage?: string;
 };
 
-export function ChatPanel({ sandboxId }: ChatPanelProps) {
+export function ChatPanel({ sandboxId, testMessage }: ChatPanelProps) {
   const [containerRef, endRef] = useScrollToBottom();
   const activeSession = useSessionStore((s) => s.activeSession());
   const updateMessages = useSessionStore((s) => s.updateMessages);
@@ -28,6 +29,7 @@ export function ChatPanel({ sandboxId }: ChatPanelProps) {
     input,
     handleInputChange,
     handleSubmit,
+    append,
     status,
     stop: stopGeneration,
     setMessages,
@@ -119,6 +121,18 @@ export function ChatPanel({ sandboxId }: ChatPanelProps) {
         ))}
         <div ref={endRef} />
       </div>
+
+      {testMessage && (
+        <div className="px-3 pt-2">
+          <button
+            onClick={() => !isLoading && append({ role: "user", content: testMessage })}
+            disabled={isLoading}
+            className="w-full py-2 rounded-lg bg-[#22c55e] hover:bg-[#16a34a] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-medium transition-colors"
+          >
+            {isLoading ? "Running..." : `▶ Send: "${testMessage}"`}
+          </button>
+        </div>
+      )}
 
       <div className="border-t border-white/[0.06] p-3">
         <form onSubmit={handleSubmit}>

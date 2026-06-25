@@ -16,7 +16,11 @@ export const useEventStore = create<EventStore>()((set) => ({
   agentStatus: { type: "idle" },
 
   addEvent: (event) =>
-    set((state) => ({ events: [...state.events, event] })),
+    set((state) => ({
+      events: state.events.some((e) => e.id === event.id)
+        ? state.events
+        : [...state.events, event],
+    })),
 
   updateEvent: (id, patch) =>
     set((state) => ({

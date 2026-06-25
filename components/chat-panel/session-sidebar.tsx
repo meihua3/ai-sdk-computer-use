@@ -93,27 +93,25 @@ function SessionItem({
 }
 
 type SessionSidebarProps = {
+  onCreateSession: () => void;
   onSwitchSession: (id: string) => void;
   onDeleteSession: (id: string) => void;
 };
 
 export function SessionSidebar({
+  onCreateSession,
   onSwitchSession,
   onDeleteSession,
 }: SessionSidebarProps) {
   const sessions = useSessionStore((s) => s.sessions);
   const activeSessionId = useSessionStore((s) => s.activeSessionId);
-  const createSession = useSessionStore((s) => s.createSession);
   const renameSession = useSessionStore((s) => s.renameSession);
 
   return (
     <div className="flex flex-col w-[200px] shrink-0 bg-[#0a0e1a] border-r border-white/[0.06] h-full">
       <div className="p-3 border-b border-white/[0.06]">
         <Button
-          onClick={() => {
-            const id = createSession();
-            onSwitchSession(id);
-          }}
+          onClick={onCreateSession}
           className="w-full gap-2 bg-white/5 hover:bg-white/10 text-[#f8fafc] border border-white/10 text-xs h-8"
           variant="ghost"
           size="sm"

@@ -93,9 +93,40 @@ type DebugPanelProps = {
   onToggle: () => void;
 };
 
+function StatCell({ label, value }: { label: string; value: string }) {
+  const hasData = value !== "—";
+  return (
+    <div className="flex flex-col items-center gap-0.5 min-w-0">
+      <span
+        className={cn(
+          "text-[11px] font-mono tabular-nums font-medium leading-none",
+          hasData ? "text-[#22c55e]" : "text-[#334155]"
+        )}
+      >
+        {value}
+      </span>
+      <span className="text-[9px] text-[#475569] uppercase tracking-wide leading-none">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function formatDuration(ms: number): string {
+  if (ms < 1000) return `${ms}ms`;
+  return `${(ms / 1000).toFixed(1)}s`;
+}
+
 export function DebugPanel({ isCollapsed, onToggle }: DebugPanelProps) {
   const events = useEventStore((s) => s.events);
   const agentStatus = useEventStore((s) => s.agentStatus);
+
+  const completedEvents = events.filter((e) => e.duration != null);
+  const totalCalls = events.length;
+  const totalDuration = completedEvents.reduce((sum, e) => sum + (e.duration ?? 0), 0);
+  const avgDuration = completedEvents.length > 0
+    ? Math.round(totalDuration / completedEvents.length)
+    : null;
 
   return (
     <div className="flex flex-col border-t border-white/[0.06] bg-[#0F172A]">
@@ -107,13 +138,27 @@ export function DebugPanel({ isCollapsed, onToggle }: DebugPanelProps) {
           <Terminal className="w-3.5 h-3.5 text-[#94a3b8]" />
           <span className="text-xs font-medium text-[#94a3b8]">Debug</span>
           <AgentStatusBadge status={agentStatus} />
-          {events.length > 0 && (
-            <span className="text-[10px] text-[#475569]">
-              {events.length} events
-            </span>
-          )}
         </div>
-        <span className="text-[#475569] text-xs">
+
+        {/* Stats — always visible in header */}
+        <div className="flex items-center gap-3 mr-2">
+          <StatCell
+            label="calls"
+            value={totalCalls > 0 ? String(totalCalls) : "—"}
+          />
+          <div className="w-px h-4 bg-white/[0.06]" />
+          <StatCell
+            label="total"
+            value={totalDuration > 0 ? formatDuration(totalDuration) : "—"}
+          />
+          <div className="w-px h-4 bg-white/[0.06]" />
+          <StatCell
+            label="avg"
+            value={avgDuration != null ? formatDuration(avgDuration) : "—"}
+          />
+        </div>
+
+        <span className="text-[#475569] text-xs shrink-0">
           {isCollapsed ? "▲" : "▼"}
         </span>
       </button>

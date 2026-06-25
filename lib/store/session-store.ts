@@ -3,6 +3,31 @@ import { persist } from "zustand/middleware";
 import type { UIMessage } from "ai";
 import type { Session, AgentEvent } from "@/lib/types";
 
+// Strip base64 image data from messages before persisting — screenshots are large
+function pruneMessagesForStorage(messages: UIMessage[]): UIMessage[] {
+  return messages.map((msg) => ({
+    ...msg,
+    parts: (msg.parts ?? []).map((part) => {
+      if (part.type === "tool-invocation") {
+        const inv = part.toolInvocation;
+        if (inv.state === "result" && inv.toolName === "computer") {
+          const result = inv.result as { type?: string; data?: string } | undefined;
+          if (result?.type === "image") {
+            return {
+              ...part,
+              toolInvocation: {
+                ...inv,
+                result: { type: "image", data: "[screenshot removed for storage]" },
+              },
+            };
+          }
+        }
+      }
+      return part;
+    }),
+  }));
+}
+
 const MAX_SESSIONS = 20;
 
 function generateId(): string {
@@ -98,9 +123,10 @@ export const useSessionStore = create<SessionStore>()(
       },
 
       updateMessages: (id, messages) => {
+        const pruned = pruneMessagesForStorage(messages);
         set((state) => ({
           sessions: state.sessions.map((s) =>
-            s.id === id ? { ...s, messages, updatedAt: Date.now() } : s
+            s.id === id ? { ...s, messages: pruned, updatedAt: Date.now() } : s
           ),
         }));
         checkStorageUsage();
