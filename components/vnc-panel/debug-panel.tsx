@@ -99,10 +99,10 @@ function EventRow({ event }: { event: AgentEvent }) {
       });
     if (p.text != null) payloadFields.push({ label: "text", value: p.text });
     if (p.scroll_direction != null)
-      payloadFields.push({ label: "scroll_dir", value: p.scroll_direction });
+      payloadFields.push({ label: "scroll_direction", value: p.scroll_direction });
     if (p.scroll_amount != null)
       payloadFields.push({
-        label: "scroll_amt",
+        label: "scroll_amount",
         value: String(p.scroll_amount),
       });
     if (p.duration != null)
