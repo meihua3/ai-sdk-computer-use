@@ -1,15 +1,21 @@
+// components/chat-panel/session-sidebar.tsx
 "use client";
 
 import { useState, useRef, useEffect } from "react";
 import { useSessionStore } from "@/lib/store/session-store";
+import { useMultiChatStore } from "@/lib/store/multi-chat-store";
+import { useNotificationStore } from "@/lib/store/notification-store";
 import { cn } from "@/lib/utils";
 import { Plus, Trash2, PenLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SettingsDialog } from "@/components/settings-dialog";
 
 type SessionItemProps = {
   id: string;
   title: string;
   isActive: boolean;
+  isRunning: boolean;
+  hasUnread: boolean;
   onSelect: () => void;
   onDelete: () => void;
   onRename: (title: string) => void;
@@ -18,6 +24,8 @@ type SessionItemProps = {
 function SessionItem({
   title,
   isActive,
+  isRunning,
+  hasUnread,
   onSelect,
   onDelete,
   onRename,
@@ -63,6 +71,24 @@ function SessionItem({
         <span className="flex-1 truncate">{title}</span>
       )}
 
+      {/* Status indicators */}
+      {!isEditing && (
+        <div className="flex items-center gap-1 shrink-0">
+          {hasUnread && (
+            <span
+              className="w-2 h-2 rounded-full bg-[#22c55e]"
+              aria-label="New activity"
+            />
+          )}
+          {isRunning && !hasUnread && (
+            <span
+              className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"
+              aria-label="Running"
+            />
+          )}
+        </div>
+      )}
+
       {!isEditing && (
         <div className="hidden group-hover:flex items-center gap-0.5">
           <button
@@ -106,6 +132,8 @@ export function SessionSidebar({
   const sessions = useSessionStore((s) => s.sessions);
   const activeSessionId = useSessionStore((s) => s.activeSessionId);
   const renameSession = useSessionStore((s) => s.renameSession);
+  const chatSessions = useMultiChatStore((s) => s.sessions);
+  const unread = useNotificationStore((s) => s.unread);
 
   return (
     <div className="flex flex-col w-[200px] shrink-0 bg-[#0a0e1a] border-r border-white/[0.06] h-full">
@@ -127,17 +155,31 @@ export function SessionSidebar({
             No sessions yet
           </p>
         )}
-        {sessions.map((session) => (
-          <SessionItem
-            key={session.id}
-            id={session.id}
-            title={session.title}
-            isActive={session.id === activeSessionId}
-            onSelect={() => onSwitchSession(session.id)}
-            onDelete={() => onDeleteSession(session.id)}
-            onRename={(title) => renameSession(session.id, title)}
-          />
-        ))}
+        {sessions.map((session) => {
+          const chatEntry = chatSessions[session.id];
+          const isRunning =
+            chatEntry?.status === "submitted" ||
+            chatEntry?.status === "streaming";
+          const hasUnread = unread.has(session.id);
+          return (
+            <SessionItem
+              key={session.id}
+              id={session.id}
+              title={session.title}
+              isActive={session.id === activeSessionId}
+              isRunning={isRunning}
+              hasUnread={hasUnread}
+              onSelect={() => onSwitchSession(session.id)}
+              onDelete={() => onDeleteSession(session.id)}
+              onRename={(title) => renameSession(session.id, title)}
+            />
+          );
+        })}
+      </div>
+
+      {/* Settings gear at bottom */}
+      <div className="p-2 border-t border-white/[0.06] flex justify-end">
+        <SettingsDialog />
       </div>
     </div>
   );
