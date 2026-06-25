@@ -218,9 +218,12 @@ export default function Page() {
             handleSwitchSession(id);
             setDrawerOpen(false);
           }}
-          onDeleteSession={(id) => {
-            handleDeleteSession(id);
-            setDrawerOpen(false);
+          onDeleteSession={async (id) => {
+            await handleDeleteSession(id);
+            const stillExists = useSessionStore
+              .getState()
+              .sessions.some((s) => s.id === id);
+            if (!stillExists) setDrawerOpen(false);
           }}
         />
       </div>
